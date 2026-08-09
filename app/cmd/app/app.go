@@ -350,6 +350,14 @@ func main() {
 		slog.Warn("error shutting down desktop server", "error", err)
 	}
 
+	// Releases the browser pane's CDP socket and, importantly, the webbrain-mcp
+	// child process. That server owns the WebBrain bridge port, and an orphaned
+	// one keeps holding it after the app is gone.
+	if uiServer.Browser != nil {
+		slog.Info("disconnecting browser pane")
+		uiServer.Browser.Disconnect()
+	}
+
 	slog.Info("shutting down ollama server")
 	cancel()
 	<-done

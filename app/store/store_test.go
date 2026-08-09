@@ -137,6 +137,58 @@ func TestStore(t *testing.T) {
 		}
 	})
 
+	t.Run("browser pane defaults to closed", func(t *testing.T) {
+		// Opening the pane attaches to a debugging port, so it must never be
+		// on until the user asks for it.
+		if err := s.SetSettings(Settings{}); err != nil {
+			t.Fatal(err)
+		}
+
+		loaded, err := s.Settings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if loaded.BrowserPaneOpen {
+			t.Error("BrowserPaneOpen is true by default")
+		}
+		if loaded.BrowserDebugPort != 0 {
+			t.Errorf("BrowserDebugPort = %d, want 0 meaning the default port", loaded.BrowserDebugPort)
+		}
+	})
+
+	t.Run("browser pane settings round trip", func(t *testing.T) {
+		if err := s.SetSettings(Settings{BrowserPaneOpen: true, BrowserDebugPort: 9333}); err != nil {
+			t.Fatal(err)
+		}
+
+		loaded, err := s.Settings()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !loaded.BrowserPaneOpen {
+			t.Error("BrowserPaneOpen did not persist")
+		}
+		if loaded.BrowserDebugPort != 9333 {
+			t.Errorf("BrowserDebugPort = %d, want 9333", loaded.BrowserDebugPort)
+		}
+	})
+
+	t.Run("browser debug port out of range falls back to default", func(t *testing.T) {
+		for _, port := range []int{-1, 80, 70000} {
+			if err := s.SetSettings(Settings{BrowserDebugPort: port}); err != nil {
+				t.Fatal(err)
+			}
+
+			loaded, err := s.Settings()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if loaded.BrowserDebugPort != 0 {
+				t.Errorf("port %d stored as %d, want 0", port, loaded.BrowserDebugPort)
+			}
+		}
+	})
+
 	t.Run("window size", func(t *testing.T) {
 		if err := s.SetWindowSize(1024, 768); err != nil {
 			t.Fatal(err)

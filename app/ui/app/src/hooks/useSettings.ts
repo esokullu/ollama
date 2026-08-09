@@ -12,6 +12,8 @@ interface SettingsState {
   lastHomeView: string;
   thinkEnabled: boolean;
   thinkLevel: string;
+  browserPaneOpen: boolean;
+  browserDebugPort: number;
 }
 
 // Type for partial settings updates
@@ -23,6 +25,8 @@ type SettingsUpdate = Partial<{
   SelectedModel: string;
   SidebarOpen: boolean;
   LastHomeView: string;
+  BrowserPaneOpen: boolean;
+  BrowserDebugPort: number;
 }>;
 
 export function useSettings() {
@@ -53,6 +57,10 @@ export function useSettings() {
       selectedModel: settingsData?.settings?.SelectedModel ?? "",
       sidebarOpen: settingsData?.settings?.SidebarOpen ?? false,
       lastHomeView: settingsData?.settings?.LastHomeView ?? "launch",
+      // The pane stays closed until asked for: opening it attaches to a
+      // browser debugging port.
+      browserPaneOpen: settingsData?.settings?.BrowserPaneOpen ?? false,
+      browserDebugPort: settingsData?.settings?.BrowserDebugPort ?? 0,
     }),
     [settingsData?.settings],
   );
