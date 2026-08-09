@@ -23,6 +23,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/ollama/ollama/api"
+	"github.com/ollama/ollama/app/browser"
 	"github.com/ollama/ollama/app/server"
 	"github.com/ollama/ollama/app/store"
 	"github.com/ollama/ollama/app/tools"
@@ -112,6 +113,11 @@ type Server struct {
 	// Updater for checking and downloading updates
 	Updater             *updater.Updater
 	UpdateAvailableFunc func()
+
+	// Browser drives the browser pane: a screencast of a Chromium tab plus
+	// the WebBrain bridge that can act on it. Built on first use.
+	Browser     *browser.Manager
+	browserOnce sync.Once
 }
 
 func (s *Server) log() *slog.Logger {
@@ -290,6 +296,19 @@ func (s *Server) Handler() http.Handler {
 	mux.Handle("POST /api/v1/model/upstream", handle(s.modelUpstream))
 	mux.Handle("GET /api/v1/settings", handle(s.getSettings))
 	mux.Handle("POST /api/v1/settings", handle(s.settings))
+	mux.Handle("GET /api/v1/browser/status", handle(s.browserStatus))
+	mux.Handle("POST /api/v1/browser/connect", handle(s.browserConnect))
+	mux.Handle("POST /api/v1/browser/disconnect", handle(s.browserDisconnect))
+	mux.Handle("GET /api/v1/browser/tabs", handle(s.browserTabs))
+	mux.Handle("POST /api/v1/browser/tab", handle(s.browserSelectTab))
+	mux.Handle("GET /api/v1/browser/stream", handle(s.browserStream))
+	mux.Handle("POST /api/v1/browser/input", handle(s.browserInput))
+	mux.Handle("POST /api/v1/browser/navigate", handle(s.browserNavigate))
+	mux.Handle("POST /api/v1/browser/task", handle(s.browserRunTask))
+	mux.Handle("GET /api/v1/browser/task", handle(s.browserTaskStatus))
+	mux.Handle("POST /api/v1/browser/task/abort", handle(s.browserAbortTask))
+	mux.Handle("POST /api/v1/browser/task/respond", handle(s.browserRespondTask))
+
 	mux.Handle("GET /api/v1/cloud", handle(s.getCloudSetting))
 	mux.Handle("POST /api/v1/cloud", handle(s.cloudSetting))
 

@@ -172,6 +172,15 @@ type Settings struct {
 
 	// AutoUpdateEnabled indicates if automatic updates should be downloaded
 	AutoUpdateEnabled bool
+
+	// BrowserPaneOpen indicates if the browser pane is showing. It stays
+	// closed until the user opens it, because opening it attaches to a
+	// Chromium debugging port.
+	BrowserPaneOpen bool
+
+	// BrowserDebugPort is the --remote-debugging-port the browser pane
+	// attaches to. 0 means the conventional 9222.
+	BrowserDebugPort int
 }
 
 type Store struct {

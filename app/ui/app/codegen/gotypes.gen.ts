@@ -416,6 +416,8 @@ export class Settings {
     SidebarOpen: boolean;
     LastHomeView: string;
     AutoUpdateEnabled: boolean;
+    BrowserPaneOpen: boolean;
+    BrowserDebugPort: number;
 
     constructor(source: any = {}) {
         if ('string' === typeof source) source = JSON.parse(source);
@@ -435,6 +437,8 @@ export class Settings {
         this.SidebarOpen = source["SidebarOpen"];
         this.LastHomeView = source["LastHomeView"];
         this.AutoUpdateEnabled = source["AutoUpdateEnabled"];
+        this.BrowserPaneOpen = source["BrowserPaneOpen"];
+        this.BrowserDebugPort = source["BrowserDebugPort"];
     }
 }
 export class SettingsResponse {

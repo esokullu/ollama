@@ -1,5 +1,24 @@
 import { Link } from "@tanstack/react-router";
 import { useSettings } from "@/hooks/useSettings";
+import { BrowserPane } from "@/components/BrowserPane";
+
+/** Width of the browser pane when open. Wide enough that a real page lays out
+ * without triggering its mobile breakpoint. */
+const BROWSER_PANE_WIDTH = "w-[440px]";
+
+function BrowserIcon() {
+  return (
+    <svg
+      className="h-5 w-5 fill-none stroke-current"
+      viewBox="0 0 24 24"
+      strokeWidth="1.6"
+      aria-hidden="true"
+    >
+      <rect x="2.75" y="4.75" width="18.5" height="14.5" rx="3" />
+      <path d="M2.75 9.25h18.5M6.5 7h.01M9 7h.01" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 export function SidebarLayout({
   sidebar,
@@ -11,6 +30,7 @@ export function SidebarLayout({
 }>) {
   const { settings, setSettings } = useSettings();
   const isWindows = navigator.platform.toLowerCase().includes("win");
+  const browserOpen = settings.browserPaneOpen;
 
   return (
     <div className={`flex transition-[width] duration-300 dark:bg-neutral-900`}>
@@ -76,6 +96,38 @@ export function SidebarLayout({
         ></div>
         {children}
       </main>
+
+      {/* Sits to the right of the toggle so it never covers the pane's own
+          controls, and shifts with it the way the sidebar button does. */}
+      <div
+        className={`absolute top-0 z-20 flex items-center py-2 transition-[right] duration-375 text-neutral-500 dark:text-neutral-400 ${
+          browserOpen ? "right-[452px]" : "right-2"
+        }`}
+      >
+        <button
+          onClick={() => setSettings({ BrowserPaneOpen: !browserOpen })}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-700/75 cursor-pointer"
+          aria-label={browserOpen ? "Hide browser" : "Show browser"}
+          title={browserOpen ? "Hide browser" : "Show browser"}
+        >
+          <BrowserIcon />
+        </button>
+      </div>
+
+      {/* Hidden by default. Kept unmounted rather than merely collapsed, so a
+          closed pane holds no debugging-port connection. */}
+      <div
+        className={`flex flex-col max-h-screen overflow-hidden transition-[width] duration-300 ${
+          browserOpen ? BROWSER_PANE_WIDTH : "w-0"
+        }`}
+      >
+        {browserOpen && (
+          <BrowserPane onClose={() => setSettings({ BrowserPaneOpen: false })} />
+        )}
+      </div>
     </div>
   );
 }

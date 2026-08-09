@@ -5,6 +5,48 @@
 - [macOS](https://github.com/ollama/app/releases/download/latest/Ollama.dmg)
 - [Windows](https://github.com/ollama/app/releases/download/latest/OllamaSetup.exe)
 
+## Browser pane
+
+A third pane on the right shows a live view of a tab in your own Chromium
+browser, and hands tasks to the [WebBrain](https://webbrain.one) extension
+running there. It is hidden until you open it with the toolbar button, and
+opening it is what makes the app attach to a browser.
+
+The pane streams frames over the Chrome DevTools Protocol and forwards clicks,
+scrolling, and typing back. It does not embed a browser of its own: the pages
+you see are running in your real, already-signed-in session.
+
+### Setup
+
+1. Quit Chrome completely, then relaunch it with remote debugging:
+
+   ```sh
+   open -a "Google Chrome" --args --remote-debugging-port=9222
+   ```
+
+   Any Chromium browser works — Edge, Brave, Vivaldi. Firefox does not: it has
+   neither CDP nor the offscreen document WebBrain's bridge needs.
+
+2. Open the pane and press **Connect**. Set a non-default port under
+   `BrowserDebugPort` in settings if 9222 is taken.
+
+3. For the WebBrain half, install the extension and point its bridge at the
+   app: **WebBrain → Settings → General → Advanced → Cloud bridge**, set the URL
+   to `ws://127.0.0.1:17374/extension` and enable it.
+
+The pane works as a viewer without step 3; only the Ask/Act bar needs it.
+
+### Notes
+
+- **The bridge is exclusive.** The extension holds one outbound bridge socket at
+  a time, so while it is pointed here it is not pointed at WebBrain Cloud
+  (`17373`) or the LM Studio plugin (`17375`).
+- **Ask vs Act.** Ask is read-only. Act can click, type, and submit, and is
+  gated by WebBrain's own in-browser approval. Anything other than an explicit
+  Act runs as Ask.
+- **First connect is slow.** The app launches the bridge with
+  `npx -y @webbrain/mcp-server`, which downloads the package on first use.
+
 ## Development
 
 ### Desktop App
@@ -13,6 +55,24 @@
 go generate ./... &&
 go run ./cmd/app
 ```
+
+### Browser pane
+
+`app/browser` is a standalone package: a minimal RFC 6455 client (`ws.go`), a
+CDP client (`cdp.go`), a stdio MCP client for webbrain-mcp (`mcp.go`), and the
+`Manager` that owns both connections. Its tests run against in-process fakes,
+plus an opt-in test against a real browser:
+
+```bash
+open -a "Google Chrome" --args --remote-debugging-port=9333
+OLLAMA_TEST_CHROME_PORT=9333 go test ./app/browser/ -run TestRealChrome -v
+```
+
+Run that after touching the protocol code. Fakes share the client's own
+constants and will happily agree with a wrong one; a real browser will not.
+
+To develop against an unreleased bridge, point `Manager.MCPCommand` at a
+checkout (`node path/to/mcp-server/dist/index.js`).
 
 ### UI Development
 
